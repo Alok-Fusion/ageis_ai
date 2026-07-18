@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { 
   Box, Container, Grid, Typography, Button, Paper, Alert, 
-  Tabs, Tab, CircularProgress, LinearProgress, Divider, List, ListItem, ListItemText, ListItemIcon 
+  Tabs, Tab, CircularProgress, LinearProgress, Divider, List, ListItem, ListItemText, ListItemIcon, Chip 
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -12,6 +12,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MapIcon from '@mui/icons-material/Map';
 import HubIcon from '@mui/icons-material/Hub';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import SecurityIcon from '@mui/icons-material/Security';
 
 import theme from './theme/theme';
 import InteractiveMap from './components/InteractiveMap';
@@ -225,14 +226,87 @@ export default function App() {
 
           {/* Core Grid Layout */}
           <Grid container spacing={3}>
-            {/* Left Control Column (Crisis Initiator & Agent Workflow logs) */}
+            {/* LEFT COLUMN: Map & Agent Flow Visualizer (xs=12, md=8 - 66% width) */}
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={3}>
+                
+                {/* 1. Main Viewport Panel: Map / Graph / Charts */}
+                <Grid item xs={12}>
+                  <Paper className="glass-panel" sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '620px' }}>
+                    <Box sx={{ borderBottom: 1, borderColor: 'rgba(79, 209, 197, 0.15)', mb: 2 }}>
+                      <Tabs 
+                        value={activeTab} 
+                        onChange={(e, val) => setActiveTab(val)}
+                        textColor="primary"
+                        indicatorColor="primary"
+                        variant="fullWidth"
+                      >
+                        <Tab icon={<MapIcon />} label="GIS Situation Map" sx={{ fontSize: '11px', fontWeight: 'bold' }} />
+                        <Tab icon={<HubIcon />} label="Knowledge Graph Explorer" sx={{ fontSize: '11px', fontWeight: 'bold' }} />
+                        <Tab icon={<ShowChartIcon />} label="Market Prices & Forecasting" sx={{ fontSize: '11px', fontWeight: 'bold' }} />
+                      </Tabs>
+                    </Box>
+
+                    <Box sx={{ flexGrow: 1, height: '480px' }}>
+                      {activeTab === 0 && (
+                        <InteractiveMap ships={ships} isHormuzBlocked={isHormuzBlocked} recentAlerts={recentAlerts} />
+                      )}
+                      {activeTab === 1 && (
+                        <GraphExplorer isHormuzBlocked={isHormuzBlocked} />
+                      )}
+                      {activeTab === 2 && (
+                        <PriceCharts isHormuzBlocked={isHormuzBlocked} />
+                      )}
+                    </Box>
+                  </Paper>
+                </Grid>
+
+                {/* 2. 15-Agent Orchestrator Graph & Logs Panel */}
+                <Grid item xs={12}>
+                  <Paper className="glass-panel" sx={{ p: 2.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 2 }}>
+                      15-AGENT INTER-COMMUNICATION WORKFLOW ORCHESTRATION
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} lg={7}>
+                        <AgentFlow activeAgentIndex={activeAgentIndex} />
+                      </Grid>
+                      <Grid item xs={12} lg={5}>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#4fd1c5', display: 'block', mb: 1 }}>
+                          ORCHESTRATOR LIVE LOG STREAM
+                        </Typography>
+                        <Box sx={{ height: '350px', overflowY: 'auto', background: '#090d13', border: '1px solid #1a2436', p: 1.5, borderRadius: '8px' }}>
+                          {agentLogs.length === 0 ? (
+                            <Typography variant="caption" sx={{ color: '#4a5568', fontStyle: 'italic' }}>
+                              Initialize a simulation scenario to stream agent telemetry.
+                            </Typography>
+                          ) : (
+                            agentLogs.map((log, index) => {
+                              const parts = log.split(':');
+                              return (
+                                <Typography key={index} sx={{ fontSize: '10px', fontFamily: 'Courier New, monospace', mb: 1, color: '#4fd1c5' }}>
+                                  <span style={{ color: '#e2e8f0', fontWeight: 'bold' }}>{parts[0]}</span>: {parts[1]}
+                                </Typography>
+                              );
+                            })
+                          )}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* RIGHT COLUMN: Crisis Control, Intelligence Wire, Chat & Sourcing (xs=12, md=4 - 33% width) */}
             <Grid item xs={12} md={4}>
               <Grid container spacing={3}>
-                {/* Crisis Trigger Card */}
+                
+                {/* 1. Control & Sourcing Panels */}
                 <Grid item xs={12}>
                   <Paper className="glass-panel" sx={{ p: 2.5, border: isHormuzBlocked ? '1px solid #ef4444' : '1px solid rgba(79, 209, 197, 0.15)' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 2 }}>
-                      SCENARIO CONTROL COMMANDS
+                      SYSTEM SCENARIO CONTROL
                     </Typography>
 
                     {!isHormuzBlocked ? (
@@ -275,30 +349,10 @@ export default function App() {
                       </Box>
                     )}
 
-                    {simulationRunning && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" sx={{ color: '#4fd1c5', display: 'block', mb: 0.5 }}>
-                          Agent Orchestration Progress
-                        </Typography>
-                        <LinearProgress variant="determinate" value={((activeAgentIndex + 1) / 15) * 100} sx={{ height: '6px', borderRadius: '4px' }} />
-                      </Box>
-                    )}
-                  </Paper>
-                </Grid>
-
-                {/* Geopolitical Feed Scanner Card */}
-                <Grid item xs={12}>
-                  <Paper className="glass-panel" sx={{ p: 2.5, border: '1px solid rgba(79, 209, 197, 0.15)' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 1.5 }}>
-                      LIVE INTELLIGENCE STREAM SENSOR
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '11px', color: '#a0aec0', mb: 2 }}>
-                      Ingesting and monitoring Reuters, CNBC, and Department of Energy global RSS threat matrices in real-time.
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, background: '#090d13', border: '1px solid #1a2436', p: 1.5, borderRadius: '8px' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, background: '#090d13', border: '1px solid #1a2436', p: 1.2, borderRadius: '8px' }}>
                       <Box>
-                        <Typography variant="caption" sx={{ color: '#718096', display: 'block', fontSize: '9px' }}>FEED SCAN COUNTDOWN</Typography>
-                        <Typography variant="body1" sx={{ color: '#4fd1c5', fontWeight: 'bold', fontFamily: 'Courier New, monospace' }}>
+                        <Typography variant="caption" sx={{ color: '#718096', display: 'block', fontSize: '9px' }}>RSS FEED COUNTDOWN</Typography>
+                        <Typography variant="body2" sx={{ color: '#4fd1c5', fontWeight: 'bold', fontFamily: 'Courier New, monospace' }}>
                           {formatTime(nextScanSeconds)}
                         </Typography>
                       </Box>
@@ -308,123 +362,112 @@ export default function App() {
                         disabled={forcingScan}
                         onClick={triggerForceScan}
                         sx={{
-                          fontSize: '11px',
+                          fontSize: '10px',
                           color: '#4fd1c5',
                           borderColor: '#4fd1c5',
+                          py: 0.3,
                           '&:hover': { background: 'rgba(79, 209, 197, 0.1)', borderColor: '#4fd1c5' }
                         }}
                       >
-                        {forcingScan ? <CircularProgress size={12} color="inherit" /> : 'FORCE SCAN FEEDS'}
+                        {forcingScan ? <CircularProgress size={10} color="inherit" /> : 'FORCE SCAN'}
                       </Button>
                     </Box>
                   </Paper>
                 </Grid>
 
-                {/* Real-time Agent Log Stream */}
+                {/* 2. Geopolitical Intelligence Wire (Dynamic Alerts) */}
                 <Grid item xs={12}>
-                  <Paper className="glass-panel" sx={{ p: 2.5, height: '350px', display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 1.5 }}>
-                      ORCHESTRATOR LIVE LOG STREAM
+                  <Paper className="glass-panel" sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '400px' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#4fd1c5', mb: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <SecurityIcon sx={{ fontSize: '16px' }} /> GEOPOLITICAL INTELLIGENCE WIRE
                     </Typography>
                     
-                    <Box sx={{ flexGrow: 1, overflowY: 'auto', background: '#090d13', border: '1px solid #1a2436', p: 1.5, borderRadius: '8px' }}>
-                      {agentLogs.length === 0 ? (
-                        <Typography variant="caption" sx={{ color: '#4a5568', fontStyle: 'italic' }}>
-                          Initialize a simulation scenario to stream agent telemetry.
+                    <Box sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      {recentAlerts.length === 0 ? (
+                        <Typography variant="caption" sx={{ color: '#718096', fontStyle: 'italic', textAlign: 'center', mt: 4, display: 'block' }}>
+                          Scanning global wire feeds... Waiting for RSS updates.
                         </Typography>
                       ) : (
-                        agentLogs.map((log, index) => {
-                          const parts = log.split(':');
-                          return (
-                            <Typography key={index} sx={{ fontSize: '10px', fontFamily: 'Courier New, monospace', mb: 1, color: '#4fd1c5' }}>
-                              <span style={{ color: '#e2e8f0', fontWeight: 'bold' }}>{parts[0]}</span>: {parts[1]}
+                        recentAlerts.map((alert) => (
+                          <Box 
+                            key={alert.id} 
+                            sx={{ 
+                              p: 1.5, 
+                              border: '1px solid', 
+                              borderColor: alert.severity === 'Critical' ? 'rgba(245, 101, 101, 0.3)' : 'rgba(79, 209, 197, 0.15)',
+                              background: alert.severity === 'Critical' ? 'rgba(245, 101, 101, 0.05)' : 'rgba(13, 20, 30, 0.4)',
+                              borderRadius: '8px'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                <Chip 
+                                  label={alert.severity.toUpperCase()} 
+                                  size="small" 
+                                  color={alert.severity === 'Critical' ? 'error' : alert.severity === 'High' ? 'warning' : 'info'}
+                                  sx={{ fontSize: '8px', height: '16px', fontWeight: 'bold' }} 
+                                />
+                                <Chip 
+                                  label={alert.event_type} 
+                                  size="small" 
+                                  sx={{ fontSize: '8px', height: '16px', background: '#1a202c', color: '#cbd5e0' }} 
+                                />
+                              </Box>
+                              <Typography style={{ fontSize: '9px', color: '#718096' }}>
+                                {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </Typography>
+                            </Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#fff', fontSize: '12px', mb: 0.5 }}>
+                              {alert.title}
                             </Typography>
-                          );
-                        })
+                            <Typography style={{ fontSize: '10px', color: '#a0aec0', lineHeight: 1.4, marginBottom: '6px' }}>
+                              {alert.content}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography style={{ fontSize: '9px', color: '#4fd1c5' }}>
+                                Loc: <strong>{alert.location} ({alert.country})</strong>
+                              </Typography>
+                              <Typography style={{ fontSize: '9px', color: '#718096' }}>
+                                Confidence: <strong>{alert.confidence}%</strong>
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))
                       )}
                     </Box>
                   </Paper>
                 </Grid>
-              </Grid>
-            </Grid>
 
-            {/* Center Intelligence Panels (Tabs for Map, Flow, Graph, Charts) */}
-            <Grid item xs={12} md={5}>
-              <Paper className="glass-panel" sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%', minHeight: '520px' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'rgba(79, 209, 197, 0.15)', mb: 2 }}>
-                  <Tabs 
-                    value={activeTab} 
-                    onChange={(e, val) => setActiveTab(val)}
-                    textColor="primary"
-                    indicatorColor="primary"
-                    variant="fullWidth"
-                  >
-                    <Tab icon={<MapIcon />} label="Geospatial Map" sx={{ fontSize: '11px' }} />
-                    <Tab icon={<HubIcon />} label="Knowledge Graph" sx={{ fontSize: '11px' }} />
-                    <Tab icon={<ShowChartIcon />} label="Market Trends" sx={{ fontSize: '11px' }} />
-                  </Tabs>
-                </Box>
-
-                <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {activeTab === 0 && (
-                    <Box sx={{ width: '100%', height: '400px' }}>
-                      <InteractiveMap ships={ships} isHormuzBlocked={isHormuzBlocked} recentAlerts={recentAlerts} />
+                {/* 3. Executive AI Chat and Recommendations */}
+                <Grid item xs={12}>
+                  <Paper className="glass-panel" sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '480px' }}>
+                    <Box sx={{ flexGrow: 1, minHeight: '220px', overflowY: 'auto' }}>
+                      <ExecutiveChat />
                     </Box>
-                  )}
-                  {activeTab === 1 && (
-                    <Box sx={{ width: '100%', height: '400px' }}>
-                      <GraphExplorer isHormuzBlocked={isHormuzBlocked} />
-                    </Box>
-                  )}
-                  {activeTab === 2 && (
-                    <Box sx={{ width: '100%', height: '400px', overflowY: 'auto' }}>
-                      <PriceCharts isHormuzBlocked={isHormuzBlocked} />
-                    </Box>
-                  )}
-                </Box>
-              </Paper>
-            </Grid>
 
-            {/* Right Panel: Executive Copilot Chat & Tactical Directives */}
-            <Grid item xs={12} md={3}>
-              <Paper className="glass-panel" sx={{ p: 2.5, height: '100%', minHeight: '520px', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ flexGrow: 1 }}>
-                  <ExecutiveChat />
-                </Box>
-
-                {isHormuzBlocked && recommendations.length > 0 && (
-                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid rgba(79, 209, 197, 0.15)' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ecc94b', display: 'block', mb: 1 }}>
-                      DIRECTIVES & RECOMMENDATIONS
-                    </Typography>
-                    
-                    <Box sx={{ maxHeight: '160px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {recommendations.map((rec, idx) => (
-                        <Box key={idx} sx={{ p: 1, border: '1px solid rgba(236, 201, 75, 0.2)', background: 'rgba(236, 201, 75, 0.03)', borderRadius: '6px' }}>
-                          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ecc94b', display: 'block' }}>
-                            {rec.action}
-                          </Typography>
-                          <Typography style={{ fontSize: '9px', color: '#a0aec0', marginTop: '2px' }}>
-                            {rec.details}
-                          </Typography>
+                    {isHormuzBlocked && recommendations.length > 0 && (
+                      <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid rgba(79, 209, 197, 0.15)' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ecc94b', display: 'block', mb: 1 }}>
+                          DIRECTIVES & RECOMMENDATIONS
+                        </Typography>
+                        <Box sx={{ maxHeight: '110px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {recommendations.map((rec, idx) => (
+                            <Box key={idx} sx={{ p: 1, border: '1px solid rgba(236, 201, 75, 0.2)', background: 'rgba(236, 201, 75, 0.03)', borderRadius: '6px' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#ecc94b', display: 'block', fontSize: '10px' }}>
+                                {rec.action}
+                              </Typography>
+                              <Typography style={{ fontSize: '9px', color: '#a0aec0', marginTop: '1px' }}>
+                                {rec.details}
+                              </Typography>
+                            </Box>
+                          ))}
                         </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
+                      </Box>
+                    )}
+                  </Paper>
+                </Grid>
 
-          {/* Bottom Agent Flow Orchestrator diagram */}
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <Paper className="glass-panel" sx={{ p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 2 }}>
-                  15-AGENT INTER-COMMUNICATION WORKFLOW ORCHESTRATION
-                </Typography>
-                <AgentFlow activeAgentIndex={activeAgentIndex} />
-              </Paper>
+              </Grid>
             </Grid>
           </Grid>
         </Container>
