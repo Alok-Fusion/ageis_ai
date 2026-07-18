@@ -32,6 +32,9 @@ export default function App() {
   const [sprReleases, setSprReleases] = useState([]);
   const [riskIndex, setRiskIndex] = useState(52.4);
 
+  const [nextScanSeconds, setNextScanSeconds] = useState(1800); // 30 minutes countdown
+  const [forcingScan, setForcingScan] = useState(false);
+
   // Fetch initial dashboard metrics on load
   const fetchDashboardData = async () => {
     try {
@@ -48,9 +51,43 @@ export default function App() {
     }
   };
 
+  // Poll metrics every 10 seconds for real-time changes
   useEffect(() => {
     fetchDashboardData();
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Decrement countdown timer every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextScanSeconds(prev => {
+        if (prev <= 1) {
+          triggerForceScan();
+          return 1800;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Triggers immediate feed check and price check
+  const triggerForceScan = async () => {
+    if (forcingScan) return;
+    setForcingScan(true);
+    try {
+      // Backend automatically checks RSS feeds on endpoint invoke
+      await fetchDashboardData();
+      setNextScanSeconds(1800);
+    } catch (err) {
+      console.error("Error running force scan:", err);
+    } finally {
+      setForcingScan(false);
+    }
+  };
 
   // Simulates a news event parsing through the 15-Agent pipeline
   const runHormuzSimulation = async () => {
@@ -113,6 +150,13 @@ export default function App() {
     window.open('http://localhost:8000/api/v1/report/download-report?scenario_key=hormuz_blockage', '_blank');
   };
 
+  // Format countdown seconds: mm:ss
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ background: '#080b0f', minHeight: '100vh', py: 2 }}>
@@ -132,7 +176,13 @@ export default function App() {
             </Box>
 
             {/* Quick KPI stats */}
-            <Box sx={{ display: 'flex', gap: 4 }}>
+            <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <Box sx={{ textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.1)', pr: 3 }}>
+                <Typography variant="caption" sx={{ color: '#718096', fontSize: '10px' }}>NEXT FEED SCAN</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#4fd1c5', fontFamily: 'Courier New, monospace' }}>
+                  {formatTime(nextScanSeconds)}
+                </Typography>
+              </Box>
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="caption" sx={{ color: '#718096', fontSize: '10px' }}>GLOBAL RISK INDEX</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: isHormuzBlocked ? '#f56565' : '#4fd1c5' }}>
@@ -231,6 +281,40 @@ export default function App() {
                         <LinearProgress variant="determinate" value={((activeAgentIndex + 1) / 15) * 100} sx={{ height: '6px', borderRadius: '4px' }} />
                       </Box>
                     )}
+                  </Paper>
+                </Grid>
+
+                {/* Geopolitical Feed Scanner Card */}
+                <Grid item xs={12}>
+                  <Paper className="glass-panel" sx={{ p: 2.5, border: '1px solid rgba(79, 209, 197, 0.15)' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#cbd5e0', mb: 1.5 }}>
+                      LIVE INTELLIGENCE STREAM SENSOR
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '11px', color: '#a0aec0', mb: 2 }}>
+                      Ingesting and monitoring Reuters, CNBC, and Department of Energy global RSS threat matrices in real-time.
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, background: '#090d13', border: '1px solid #1a2436', p: 1.5, borderRadius: '8px' }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: '#718096', display: 'block', fontSize: '9px' }}>FEED SCAN COUNTDOWN</Typography>
+                        <Typography variant="body1" sx={{ color: '#4fd1c5', fontWeight: 'bold', fontFamily: 'Courier New, monospace' }}>
+                          {formatTime(nextScanSeconds)}
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled={forcingScan}
+                        onClick={triggerForceScan}
+                        sx={{
+                          fontSize: '11px',
+                          color: '#4fd1c5',
+                          borderColor: '#4fd1c5',
+                          '&:hover': { background: 'rgba(79, 209, 197, 0.1)', borderColor: '#4fd1c5' }
+                        }}
+                      >
+                        {forcingScan ? <CircularProgress size={12} color="inherit" /> : 'FORCE SCAN FEEDS'}
+                      </Button>
+                    </Box>
                   </Paper>
                 </Grid>
 

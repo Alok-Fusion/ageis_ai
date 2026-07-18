@@ -5,27 +5,36 @@ from backend.app.database.session import get_db
 from backend.app.models.models import Ship, Refinery, Reserve, PowerGrid, PriceHistory, Event
 from backend.app.schemas.schemas import ShipSchema, RefinerySchema, ReserveSchema, PowerGridSchema
 
+from backend.app.services.live_data import live_data_service
+
 router = APIRouter()
 
 @router.get("/metrics")
 def get_dashboard_metrics(db: Session = Depends(get_db)):
     """Fetch global overview metrics for commodities, risks, and energy supplies."""
-    # 1. Fetch current commodity prices
+    # Check if there is an active crisis simulation
+    # We query the DB for the latest active critical events
+    active_crisis = db.query(Event).filter(
+        Event.severity == "Critical",
+        Event.verified == True
+    ).order_by(Event.created_at.desc()).first()
+    
+    is_crisis_active = active_crisis is not None and "Hormuz" in active_crisis.title
+    
+    # 1. Fetch current commodity prices (Live Yahoo Finance if no crisis, else shock values)
     prices = {}
-    commodities = ["Brent Crude", "WTI Crude", "LNG (Asia/Europe)", "Coal (Newcastle)", "Hydrogen (Liquid H2)", "Electricity (EU/US Avg MWh)"]
-    for comm in commodities:
-        latest = db.query(PriceHistory).filter(PriceHistory.commodity == comm).order_type = PriceHistory.date.desc()
-        # In sqlite we can just order by date desc and take the first
-        latest_price = db.query(PriceHistory).filter(PriceHistory.commodity == comm).order_by(PriceHistory.date.desc()).first()
-        if latest_price:
-            # Simple change calculation
-            prev = db.query(PriceHistory).filter(PriceHistory.commodity == comm).order_by(PriceHistory.date.desc()).offset(1).first()
-            change = 0.0
-            if prev:
-                change = round(((latest_price.price - prev.price) / prev.price) * 100, 2)
-            prices[comm] = {"price": latest_price.price, "change": change}
-        else:
-            prices[comm] = {"price": 0.0, "change": 0.0}
+    if is_crisis_active:
+        prices = {
+            "Brent Crude": {"price": 118.20, "change": 50.6},
+            "WTI Crude": {"price": 105.50, "change": 42.9},
+            "LNG (Asia/Europe)": {"price": 21.80, "change": 75.8},
+            "Coal (Newcastle)": {"price": 138.00, "change": 23.2},
+            "Hydrogen (Liquid H2)": {"price": 4.60, "change": 35.3},
+            "Electricity (EU/US Avg MWh)": {"price": 122.00, "change": 45.2}
+        }
+    else:
+        # Fetch real Yahoo Finance prices dynamically!
+        prices = live_data_service.fetch_live_prices()
 
     # 2. Counts of assets
     total_ships = db.query(Ship).count()
@@ -54,8 +63,8 @@ def get_dashboard_metrics(db: Session = Depends(get_db)):
             "grids": total_grids
         },
         "recent_alerts": alerts_data,
-        "energy_risk_index": 52.4, # baseline score
-        "confidence_level": 94.0
+        "energy_risk_index": 93.5 if is_crisis_active else 52.4,
+        "confidence_level": 96.5 if is_crisis_active else 94.0
     }
 
 @router.get("/ships", response_model=List[ShipSchema])
