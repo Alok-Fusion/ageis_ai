@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
+import random
 from backend.app.database.session import get_db
 from backend.app.models.models import Ship, Refinery, Reserve, PowerGrid, PriceHistory, Event
 from backend.app.schemas.schemas import ShipSchema, RefinerySchema, ReserveSchema, PowerGridSchema
@@ -69,20 +70,62 @@ def get_dashboard_metrics(db: Session = Depends(get_db)):
 
 @router.get("/ships", response_model=List[ShipSchema])
 def get_ships(db: Session = Depends(get_db)):
-    """Fetch all active tankers, carriers, and H2 vessels."""
-    return db.query(Ship).all()
+    """Fetch all active tankers, carriers, and H2 vessels with real-time coordinate drifts."""
+    ships = db.query(Ship).all()
+    # Apply minor coordinate drift along voyages to simulate real-time maritime transit
+    for ship in ships:
+        # Speed affects step size. Drift slightly towards destination directions.
+        drift_factor = 0.003 if ship.status == "Transit" else 0.0
+        # Determine drift direction based on destination name hashes to stay consistent
+        dest_hash = sum(ord(c) for c in ship.destination)
+        lat_dir = 1 if dest_hash % 2 == 0 else -1
+        lng_dir = 1 if (dest_hash // 2) % 2 == 0 else -1
+        
+        ship.lat += (lat_dir * drift_factor * (ship.speed / 15.0)) + random.uniform(-0.001, 0.001)
+        ship.lng += (lng_dir * drift_factor * (ship.speed / 15.0)) + random.uniform(-0.001, 0.001)
+        
+        # Bounding box constraints
+        ship.lat = max(-75.0, min(80.0, ship.lat))
+        ship.lng = max(-180.0, min(180.0, ship.lng))
+    
+    db.commit()
+    return ships
 
 @router.get("/refineries", response_model=List[RefinerySchema])
 def get_refineries(db: Session = Depends(get_db)):
-    """Fetch refineries state."""
-    return db.query(Refinery).all()
+    """Fetch refineries state with real-time production fluctuations."""
+    refineries = db.query(Refinery).all()
+    for ref in refineries:
+        # Production output fluctuates slightly based on operational margins (±0.4%)
+        ref.current_output += random.uniform(-0.004, 0.004) * ref.capacity
+        ref.current_output = max(0.9 * ref.capacity, min(ref.capacity, ref.current_output))
+    db.commit()
+    return refineries
 
 @router.get("/reserves", response_model=List[ReserveSchema])
 def get_reserves(db: Session = Depends(get_db)):
-    """Fetch strategic petroleum and gas reserve statuses."""
-    return db.query(Reserve).all()
+    """Fetch strategic petroleum and gas reserve statuses with micro stock changes."""
+    reserves = db.query(Reserve).all()
+    for res in reserves:
+        # Micro consumption/fill increments (±0.05 million barrels/BCF)
+        res.current_stock += random.uniform(-0.05, 0.05)
+        res.current_stock = max(0.0, min(res.max_capacity, res.current_stock))
+    db.commit()
+    return reserves
 
 @router.get("/grids", response_model=List[PowerGridSchema])
 def get_grids(db: Session = Depends(get_db)):
-    """Fetch regional electricity grid outputs and health."""
-    return db.query(PowerGrid).all()
+    """Fetch regional electricity grid outputs with dynamic solar/wind volatility."""
+    grids = db.query(PowerGrid).all()
+    for grid in grids:
+        if grid.grid_type in ["Solar", "Wind"]:
+            # Renewables are highly volatile: fluctuate by ±3%
+            grid.generation += random.uniform(-0.03, 0.03) * grid.capacity
+        else:
+            # Baseload grids (Coal, Nuclear) are stable: fluctuate by ±0.2%
+            grid.generation += random.uniform(-0.002, 0.002) * grid.capacity
+        
+        # Generation cap limits
+        grid.generation = max(0.1 * grid.capacity, min(grid.capacity, grid.generation))
+    db.commit()
+    return grids
