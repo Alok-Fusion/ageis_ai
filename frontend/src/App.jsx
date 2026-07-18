@@ -31,6 +31,7 @@ export default function App() {
   const [recommendations, setRecommendations] = useState([]);
   const [sprReleases, setSprReleases] = useState([]);
   const [riskIndex, setRiskIndex] = useState(52.4);
+  const [recentAlerts, setRecentAlerts] = useState([]);
 
   const [nextScanSeconds, setNextScanSeconds] = useState(1800); // 30 minutes countdown
   const [forcingScan, setForcingScan] = useState(false);
@@ -42,6 +43,7 @@ export default function App() {
       const data = await res.json();
       setPrices(data.prices || {});
       setRiskIndex(data.energy_risk_index);
+      setRecentAlerts(data.recent_alerts || []);
       
       const shipsRes = await fetch('http://localhost:8000/api/v1/dashboard/ships');
       const shipsData = await shipsRes.json();
@@ -366,7 +368,7 @@ export default function App() {
                 <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {activeTab === 0 && (
                     <Box sx={{ width: '100%', height: '400px' }}>
-                      <InteractiveMap ships={ships} isHormuzBlocked={isHormuzBlocked} />
+                      <InteractiveMap ships={ships} isHormuzBlocked={isHormuzBlocked} recentAlerts={recentAlerts} />
                     </Box>
                   )}
                   {activeTab === 1 && (
