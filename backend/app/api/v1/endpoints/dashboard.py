@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 import random
 from backend.app.database.session import get_db
-from backend.app.models.models import Ship, Refinery, Reserve, PowerGrid, PriceHistory, Event
-from backend.app.schemas.schemas import ShipSchema, RefinerySchema, ReserveSchema, PowerGridSchema
+from backend.app.models.models import Ship, Refinery, Reserve, PowerGrid, PriceHistory, Event, Supplier
+from backend.app.schemas.schemas import ShipSchema, RefinerySchema, ReserveSchema, PowerGridSchema, SupplierSchema
 
 from backend.app.services.live_data import live_data_service
 
@@ -129,3 +129,8 @@ def get_grids(db: Session = Depends(get_db)):
         grid.generation = max(0.1 * grid.capacity, min(grid.capacity, grid.generation))
     db.commit()
     return grids
+
+@router.get("/suppliers", response_model=List[SupplierSchema])
+def get_suppliers(db: Session = Depends(get_db)):
+    """Fetch global contract suppliers."""
+    return db.query(Supplier).all()

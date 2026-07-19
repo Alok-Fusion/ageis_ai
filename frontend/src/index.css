@@ -1,14 +1,14 @@
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f1319;
+  background: #06080c;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1a2333;
-  border-radius: 4px;
+  background: #1e293b;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #4fd1c5;
@@ -17,151 +17,72 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #030508;
-  color: #e2e8f0;
-  font-family: 'Courier New', Courier, monospace;
-  overflow: hidden; /* Lock viewport for full-screen map experience */
+  background-color: #06080c;
+  color: #94a3b8;
+  font-family: monospace, system-ui, -apple-system, sans-serif;
+  overflow: hidden; /* Lock viewport for full-screen dashboard */
 }
 
-/* CRT Scanline Beam Animation */
-.scanline-beam {
-  position: fixed;
-  top: 0;
-  left: 0;
+/* Custom Telemetry Table styles */
+.telemetry-table {
   width: 100%;
-  height: 4px;
-  background: linear-gradient(to bottom, rgba(79, 209, 197, 0) 0%, rgba(79, 209, 197, 0.2) 50%, rgba(79, 209, 197, 0) 100%);
-  animation: scanline-run 8s linear infinite;
-  pointer-events: none;
-  z-index: 9999;
+  border-collapse: collapse;
+  font-size: 10px;
+  font-family: monospace;
 }
 
-@keyframes scanline-run {
-  0% { top: -10px; }
-  100% { top: 100%; }
+.telemetry-table th {
+  background: #0d131f;
+  color: #4fd1c5;
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #1e293b;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* Corner Retro Brackets */
-.corner-bracket {
-  position: fixed;
-  width: 24px;
-  height: 24px;
-  border-color: rgba(79, 209, 197, 0.45);
-  pointer-events: none;
-  z-index: 2000;
-}
-.corner-top-left { top: 12px; left: 12px; border-left: 2px solid; border-top: 2px solid; }
-.corner-top-right { top: 12px; right: 12px; border-right: 2px solid; border-top: 2px solid; }
-.corner-bottom-left { bottom: 12px; left: 12px; border-left: 2px solid; border-bottom: 2px solid; }
-.corner-bottom-right { bottom: 12px; right: 12px; border-right: 2px solid; border-bottom: 2px solid; }
-
-/* Floating Overlay Style */
-.floating-overlay-card {
-  background: rgba(8, 12, 20, 0.82) !important;
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(79, 209, 197, 0.22) !important;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.65) !important;
-  border-radius: 8px !important;
+.telemetry-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #0f172a;
+  color: #cbd5e1;
 }
 
-/* Full Screen Map Container */
-.fullscreen-map-container {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 0 !important;
+.telemetry-table tr:hover {
+  background: rgba(79, 209, 197, 0.05);
+  cursor: pointer;
+}
+
+.telemetry-table tr.selected-row {
+  background: rgba(147, 51, 234, 0.15) !important;
+  border-left: 2px solid #a855f7;
+}
+
+/* Polar radar coordinate animation */
+@keyframes radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep-line {
+  transform-origin: 100px 100px;
+  animation: radar-sweep 6s linear infinite;
 }
 
 /* Glassmorphism panel styling */
 .glass-panel {
-  background: rgba(13, 20, 30, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(79, 209, 197, 0.15);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  transition: all 0.3s ease;
+  background: #090e17;
+  border: 1px solid #1a2333;
+  border-radius: 4px;
 }
 
-.glass-panel:hover {
-  border-color: rgba(79, 209, 197, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(79, 209, 197, 0.05);
-}
-
-/* Critical Threat Border */
-.threat-panel-critical {
-  border: 1px solid rgba(239, 68, 68, 0.4) !important;
-  box-shadow: 0 4px 20px 0 rgba(239, 68, 68, 0.15) !important;
-}
-
-.threat-panel-critical:hover {
-  border-color: rgba(239, 68, 68, 0.8) !important;
-  box-shadow: 0 4px 24px 0 rgba(239, 68, 68, 0.25) !important;
-}
-
-/* Glowing text */
-.glow-text-cyan {
-  text-shadow: 0 0 10px rgba(79, 209, 197, 0.6);
-}
-
-.glow-text-red {
-  text-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-}
-
-/* React Flow customizations */
-.react-flow__node {
-  border-radius: 8px !important;
-  padding: 10px !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-}
-
-.react-flow__handle {
-  background: #4fd1c5 !important;
-  width: 8px !important;
-  height: 8px !important;
-}
-
-/* Pulse animation for active agents */
-@keyframes agent-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(79, 209, 197, 0.7);
-    border-color: rgba(79, 209, 197, 1);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(79, 209, 197, 0);
-    border-color: rgba(79, 209, 197, 0.5);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(79, 209, 197, 0);
-    border-color: rgba(79, 209, 197, 0.3);
-  }
-}
-
-.active-agent {
-  animation: agent-pulse 1.5s infinite;
-  background: rgba(79, 209, 197, 0.15) !important;
-}
-
-/* Leaflet Map custom style */
+/* Leaflet Map custom style overrides */
 .leaflet-container {
-  background-color: #0c0f12 !important;
+  background-color: #06080c !important;
   width: 100%;
   height: 100%;
-  border-radius: 8px;
-}
-
-/* Dashboard metric cards */
-.metric-card {
-  background: linear-gradient(135deg, #111823 0%, #0d121c 100%);
-  border: 1px solid #1a2436;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s ease-in-out;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-  border-color: #4fd1c5;
 }

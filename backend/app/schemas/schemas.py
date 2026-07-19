@@ -79,3 +79,16 @@ class PriceHistorySchema(BaseModel):
     
     class Config:
         from_attributes = True
+
+class SupplierSchema(BaseModel):
+    id: int
+    name: str
+    resource_type: str
+    reliability_score: float
+    volume: float
+    cost_per_unit: float
+    delivery_days: int
+    country: str
+    
+    class Config:
+        from_attributes = True
